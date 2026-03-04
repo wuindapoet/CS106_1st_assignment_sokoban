@@ -43,7 +43,16 @@ class Game:
        }
 
     def load_level(self):
-        self.level = Level(self.index_level)
+        # Load level. If level not found, load next level.
+        try:
+            self.level = Level(self.index_level)
+        except FileNotFoundError:
+            print(f"Level {self.index_level} not found. Loading next level...")
+            self.index_level += 1
+
+            self.load_level()
+            return
+        
         self.board = pygame.Surface((self.level.width, self.level.height))
         if self.player:
             self.player.pos = self.level.position_player
