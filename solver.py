@@ -143,31 +143,6 @@ def isFailed(posBox):
     return False
 
 """Implement all approcahes"""
-
-#  Hàm heuristic: Ước lượng chi phí còn lại để đạt goal từ trạng thái hiện tại
-def _heuristic(posBox, posGoals):
-    """
-    Tính tổng khoảng cách Manhattan tối thiểu từ mỗi thùng đến mục tiêu gần nhất.
-    Dùng thuật toán Hungarian (greedy matching) để tránh 2 thùng tranh 1 mục tiêu.
-    Đây là admissible heuristic (không bao giờ overestimate) → A* vẫn tối ưu.
-    """
-    distance = 0
-    goals = list(posGoals)
-    boxes = list(posBox)
-    
-    # Greedy matching: mỗi thùng chọn goal gần nhất chưa bị chọn
-    for box in boxes:
-        if box in goals:          # thùng đã trên goal → cost = 0
-            goals.remove(box)
-            continue
-        # Tính Manhattan distance đến tất cả goal còn lại
-        dists = [(abs(box[0]-g[0]) + abs(box[1]-g[1]), g) for g in goals]
-        dists.sort()
-        distance += dists[0][0]
-        goals.remove(dists[0][1])
-    
-    return distance
-
 def depthFirstSearch(gameState):
     """Implement depthFirstSearch approach"""
     """
@@ -196,52 +171,44 @@ def depthFirstSearch(gameState):
                 actions.append(node_action + [action[-1]])
     return temp
     """
-    beginBox    = PosOfBoxes(gameState)
+    beginBox = PosOfBoxes(gameState)
     beginPlayer = PosOfPlayer(gameState)
-    startState  = (beginPlayer, beginBox)
 
-    # Lưu liên kết ngược: state => (state_cha, hành_động_để_đến_state_này)
-    # Stack chỉ chứa state đơn lẻ, không chứa cả path như trước nhằm giảm bộ nhớ
+    startState = (beginPlayer, beginBox)
+
+    # parent: state -> (parentState, action)
     parent = {startState: (None, None)}
 
-    frontier    = collections.deque([startState])  # stack (LIFO), chỉ chứa state
-    exploredSet = set()
+    frontier = collections.deque([startState])
 
     while frontier:
-        state = frontier.pop()                     # lấy state trên cùng của stack
-        posPlayer, posBox = state
+        state = frontier.pop()
+        posPlayer, boxState = state
 
-        if isEndState(posBox):
-            # Truy ngược qua dict parent để dựng lại danh sách hành động
+        if isEndState(boxState):
             actions = []
             curr = state
-            while parent[curr][1] is not None:     # leo ngược đến startState
-                actions.append(parent[curr][1])    # lưu hành động
-                curr = parent[curr][0]             # nhảy sang state cha
-            return actions[::-1]                   # đảo ngược để ra thứ tự đúng
+            while parent[curr][1] is not None:
+                actions.append(parent[curr][1])
+                curr = parent[curr][0]
+            return actions[::-1]
 
-        if state in exploredSet:                   # đã expand rồi thì bỏ qua
-            continue
-        exploredSet.add(state)
-
-        legal = legalActions(posPlayer, posBox)
-
-        # Sắp xếp legal actions để ưu tiên push hơn move (giúp giảm branching factor, tăng hiệu quả)
+        legal = legalActions(posPlayer, boxState)
         legal = sorted(legal, key=lambda a: a[-1].islower(), reverse=True)
 
         for action in legal:
-            newPosPlayer, newPosBox = updateState(posPlayer, posBox, action)
+            newPosPlayer, newPosBox = updateState(posPlayer, boxState, action)
 
-            if isFailed(newPosBox):                # cắt tỉa dead-lock
+            if isFailed(newPosBox):
                 continue
 
             newState = (newPosPlayer, newPosBox)
 
-            # Chỉ thêm vào stack nếu state chưa được biết đến
-            # (tránh duplicate trên stack, giảm thêm bộ nhớ)
-            if newState not in exploredSet and newState not in parent:
-                parent[newState] = (state, action[-1])  # lưu cha + hành động
+            if newState not in parent:
+                parent[newState] = (state, action[-1])
                 frontier.append(newState)
+
+    return []
 
 def breadthFirstSearch(gameState):
     """Implement breadthFirstSearch approach"""
