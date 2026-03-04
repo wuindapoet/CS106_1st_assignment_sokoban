@@ -144,8 +144,34 @@ def isFailed(posBox):
 
 """Implement all approcahes"""
 
+#  Hàm heuristic: Ước lượng chi phí còn lại để đạt goal từ trạng thái hiện tại
+def _heuristic(posBox, posGoals):
+    """
+    Tính tổng khoảng cách Manhattan tối thiểu từ mỗi thùng đến mục tiêu gần nhất.
+    Dùng thuật toán Hungarian (greedy matching) để tránh 2 thùng tranh 1 mục tiêu.
+    Đây là admissible heuristic (không bao giờ overestimate) → A* vẫn tối ưu.
+    """
+    distance = 0
+    goals = list(posGoals)
+    boxes = list(posBox)
+    
+    # Greedy matching: mỗi thùng chọn goal gần nhất chưa bị chọn
+    for box in boxes:
+        if box in goals:          # thùng đã trên goal → cost = 0
+            goals.remove(box)
+            continue
+        # Tính Manhattan distance đến tất cả goal còn lại
+        dists = [(abs(box[0]-g[0]) + abs(box[1]-g[1]), g) for g in goals]
+        dists.sort()
+        distance += dists[0][0]
+        goals.remove(dists[0][1])
+    
+    return distance
+
 def depthFirstSearch(gameState):
     """Implement depthFirstSearch approach"""
+    """
+    ## ORIGINAL CODE
     beginBox = PosOfBoxes(gameState)
     beginPlayer = PosOfPlayer(gameState)
 
@@ -169,6 +195,53 @@ def depthFirstSearch(gameState):
                 frontier.append(node + [(newPosPlayer, newPosBox)])
                 actions.append(node_action + [action[-1]])
     return temp
+    """
+    beginBox    = PosOfBoxes(gameState)
+    beginPlayer = PosOfPlayer(gameState)
+    startState  = (beginPlayer, beginBox)
+
+    # Lưu liên kết ngược: state => (state_cha, hành_động_để_đến_state_này)
+    # Stack chỉ chứa state đơn lẻ, không chứa cả path như trước nhằm giảm bộ nhớ
+    parent = {startState: (None, None)}
+
+    frontier    = collections.deque([startState])  # stack (LIFO), chỉ chứa state
+    exploredSet = set()
+
+    while frontier:
+        state = frontier.pop()                     # lấy state trên cùng của stack
+        posPlayer, posBox = state
+
+        if isEndState(posBox):
+            # Truy ngược qua dict parent để dựng lại danh sách hành động
+            actions = []
+            curr = state
+            while parent[curr][1] is not None:     # leo ngược đến startState
+                actions.append(parent[curr][1])    # lưu hành động
+                curr = parent[curr][0]             # nhảy sang state cha
+            return actions[::-1]                   # đảo ngược để ra thứ tự đúng
+
+        if state in exploredSet:                   # đã expand rồi thì bỏ qua
+            continue
+        exploredSet.add(state)
+
+        legal = legalActions(posPlayer, posBox)
+
+        # Sắp xếp legal actions để ưu tiên push hơn move (giúp giảm branching factor, tăng hiệu quả)
+        legal = sorted(legal, key=lambda a: a[-1].islower(), reverse=True)
+
+        for action in legal:
+            newPosPlayer, newPosBox = updateState(posPlayer, posBox, action)
+
+            if isFailed(newPosBox):                # cắt tỉa dead-lock
+                continue
+
+            newState = (newPosPlayer, newPosBox)
+
+            # Chỉ thêm vào stack nếu state chưa được biết đến
+            # (tránh duplicate trên stack, giảm thêm bộ nhớ)
+            if newState not in exploredSet and newState not in parent:
+                parent[newState] = (state, action[-1])  # lưu cha + hành động
+                frontier.append(newState)
 
 def breadthFirstSearch(gameState):
     """Implement breadthFirstSearch approach"""
@@ -181,6 +254,21 @@ def breadthFirstSearch(gameState):
     actions = collections.deque([[0]])
     temp = []
     ### CODING FROM HERE ###
+    while frontier:
+        node = frontier.popleft()
+        node_action = actions.popleft()
+        if isEndState(node[-1][-1]):
+            temp += node_action[1:]
+            break
+        if node[-1] not in exploredSet:
+            exploredSet.add(node[-1])
+            for action in legalActions(node[-1][0], node[-1][1]):
+                newPosPlayer, newPosBox = updateState(node[-1][0], node[-1][1], action)
+                if isFailed(newPosBox):
+                    continue
+                frontier.append(node + [(newPosPlayer, newPosBox)])
+                actions.append(node_action + [action[-1]])
+    return temp
 
 def cost(actions):
     """A cost function"""
@@ -199,6 +287,21 @@ def uniformCostSearch(gameState):
     actions.push([0], 0)
     temp = []
     ### CODING FROM HERE ###
+    while not frontier.isEmpty():
+        node = frontier.pop()
+        node_action = actions.pop()
+        if isEndState(node[-1][-1]):
+            temp += node_action[1:]
+            break
+        if node[-1] not in exploredSet:
+            exploredSet.add(node[-1])
+            for action in legalActions(node[-1][0], node[-1][1]):
+                newPosPlayer, newPosBox = updateState(node[-1][0], node[-1][1], action)
+                if isFailed(newPosBox):
+                    continue
+                frontier.push(node + [(newPosPlayer, newPosBox)], cost(node_action + [action[-1]]))
+                actions.push(node_action + [action[-1]], cost(node_action + [action[-1]]))
+    return temp
 
 """Read command"""
 def readCommand(argv):
