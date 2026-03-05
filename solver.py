@@ -145,8 +145,7 @@ def isFailed(posBox):
 """Implement all approcahes"""
 def depthFirstSearch(gameState):
     """Implement depthFirstSearch approach"""
-    """
-    ## ORIGINAL CODE
+    """## ORIGINAL CODE
     beginBox = PosOfBoxes(gameState)
     beginPlayer = PosOfPlayer(gameState)
 
@@ -171,43 +170,74 @@ def depthFirstSearch(gameState):
                 actions.append(node_action + [action[-1]])
     return temp
     """
+    # Lấy vị trí ban đầu của các box trong game và của player
     beginBox = PosOfBoxes(gameState)
     beginPlayer = PosOfPlayer(gameState)
 
+    # Tạo state ban đầu gồm vị trí player và vị trí các box
     startState = (beginPlayer, beginBox)
 
-    # parent: state -> (parentState, action)
+    # parent: dictionary lưu thông tin state cha
+    # key: state hiện tại
+    # value: (state cha, action dẫn tới state hiện tại), đồng thời parent cũng đóng vai trò là visited set
     parent = {startState: (None, None)}
 
+    # frontier là stack dùng cho DFS, dùng deque nhưng lấy phần tử bằng pop() ở cuối
     frontier = collections.deque([startState])
 
+    # Lặp cho đến khi frontier rỗng
     while frontier:
+
+        # Lấy state ở cuối stack
         state = frontier.pop()
+
+        # Tách state thành vị trí player và vị trí các box
         posPlayer, boxState = state
 
+        #Kiểm tra xem các box đã ở vị trí goal chưa
         if isEndState(boxState):
+
+            # Danh sách lưu các action từ start đến goal
             actions = []
             curr = state
+
+            # Lần ngược lại các state cha để reconstruct đường đi
             while parent[curr][1] is not None:
                 actions.append(parent[curr][1])
                 curr = parent[curr][0]
+
+            # Đảo ngược lại để được thứ tự từ start đến goal
             return actions[::-1]
 
+        # Lấy danh sách các action hợp lệ từ state hiện tại
         legal = legalActions(posPlayer, boxState)
+
+        # Sắp xếp action: ưu tiên push box (chữ hoa) trước move thường (chữ thường)
         legal = sorted(legal, key=lambda a: a[-1].islower(), reverse=True)
 
+        # Duyệt qua từng action hợp lệ
         for action in legal:
+
+            # Tính toán state mới sau khi thực hiện action
             newPosPlayer, newPosBox = updateState(posPlayer, boxState, action)
 
+            # Nếu state box mới rơi vào deadlock thì bỏ qua
             if isFailed(newPosBox):
                 continue
 
+            #Tạo state mới từ vị trí player và box sau khi cập nhật
             newState = (newPosPlayer, newPosBox)
 
+            # Nếu state này chưa được thăm (chưa có trong parent)
             if newState not in parent:
+
+                # Lưu lại state cha và action dẫn tới state này
                 parent[newState] = (state, action[-1])
+
+                # Đưa state mới vào stack để tiếp tục DFS
                 frontier.append(newState)
 
+    # Trả về danh sách rỗng nếu không tìm được đường đi nào từ start đến goal
     return []
 
 def breadthFirstSearch(gameState):
