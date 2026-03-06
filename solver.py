@@ -182,7 +182,7 @@ def depthFirstSearch(gameState):
     # value: (state cha, action dẫn tới state hiện tại), đồng thời parent cũng đóng vai trò là visited set
     parent = {startState: (None, None)}
 
-    # frontier là stack dùng cho DFS, dùng deque nhưng lấy phần tử bằng pop() ở cuối
+    # frontier: stack với mỗi phần tử là một state
     frontier = collections.deque([startState])
 
     # Lặp cho đến khi frontier rỗng
@@ -224,7 +224,7 @@ def depthFirstSearch(gameState):
                 parent[newState] = (state, action[-1])
                 # Đưa state mới vào stack để tiếp tục DFS
                 frontier.append(newState)
-    # Trả về danh sách rỗng nếu không tìm được đường đi nào từ start đến goal
+    #trả về danh sách rỗng nếu không có solution
     return []
 
 def breadthFirstSearch(gameState):
@@ -244,9 +244,9 @@ def breadthFirstSearch(gameState):
     # tập các trạng thái đã duyệt để tránh lặp lại
     exploredSet = set()
     
-    # lặp cho đến khi frontier rỗng
+    # Lặp cho đến khi frontier rỗng
     while frontier:
-        # lấy phần tử đầu hàng đợi (FIFO) đúng theo BFS
+        # lấy phần tử đầu hàng đợi (FIFO)
         state, actions = frontier.popleft()
         # tách vị trí player và box từ state
         posPlayer, posBox = state
@@ -257,7 +257,7 @@ def breadthFirstSearch(gameState):
         # nếu trạng thái này đã được duyệt trước đó thì bỏ qua
         if state in exploredSet:
             continue
-        # thêm trạng thái vào tập explored
+        #thêm trạng thái vào tập explored
         exploredSet.add(state)
         
         # duyệt tất cả các hành động hợp lệ từ trạng thái hiện tại
@@ -273,7 +273,7 @@ def breadthFirstSearch(gameState):
             newActions = actions + [action[-1]]
             # thêm trạng thái mới vào hàng đợi frontier
             frontier.append((newState, newActions))
-    # trả về danh sách rỗng nếu không tìm được đường đi nào từ start đến goal
+    # trả về danh sách rỗng nếu không có solution
     return []
 
 def cost(actions):
@@ -319,7 +319,7 @@ def uniformCostSearch(gameState):
         for action in legalActions(posPlayer, posBox):
             # cập nhật vị trí mới của player và box sau khi thực hiện action
             newPosPlayer, newPosBox = updateState(posPlayer, posBox, action)
-            # nếu trạng thái mới là trạng thái thất bại (deadlock) thì bỏ qua
+            # nếu trạng thái mới là deadlock thì bỏ qua
             if isFailed(newPosBox):
                 continue
             # tạo trạng thái mới
@@ -332,7 +332,7 @@ def uniformCostSearch(gameState):
                 newCost = cost(newActions)
                 # thêm trạng thái mới vào frontier với độ ưu tiên là chi phí
                 frontier.push((newState, newActions), newCost)
-    # nếu không tìm được lời giải, trả về danh sách rỗng
+    # no solution = danh sách rỗng
     return []
 
 """Read command"""
