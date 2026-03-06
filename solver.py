@@ -369,6 +369,6 @@ def get_move(layout, player_pos, method):
     else:
         raise ValueError('Invalid method.')
     time_end=time.time()
-    print('Runtime of %s: %.2f second.' %(method, time_end-time_start))
     print(result)
+    print('Runtime of %s: %.2f second.' %(method, time_end-time_start))
     return result
