@@ -42,8 +42,3 @@ python3 Sokoban.py
 ```
 ---
 
-### Demo: 
-- **[First Assignment: DFS/BFS/UCS for Sokoban - Modeling Search Problem | CS106.Q23](link)**
----
-
-
