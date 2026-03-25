@@ -6,7 +6,7 @@
 - From: University of Information Technology, VNU-HCM
 ---
 
-## Project Discription:
+## Assignmet Discription:
 - This project implements classical search algorithms **DFS (Depth-First Search)**, **BFS (Breadth-First Search)**, and **UCS (Uniform Cost Search)** to solve the Sokoban game.
 
 - Sokoban is a puzzle game where a player pushes boxes to designated target positions within a warehouse maze. The challenge lies in finding a valid sequence of moves that places all boxes on goal tiles.
